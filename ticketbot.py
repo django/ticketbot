@@ -10,7 +10,7 @@ import os
 import sys
 import re
 
-ticket_re = re.compile(r'#(\d+)')
+ticket_re = re.compile(r'(?:^|\s)#(\d+)')
 ticket_url = "https://code.djangoproject.com/ticket/%s"
 
 changeset_re = re.compile(r'(?:^|\s)r(\d+)')
