@@ -13,7 +13,7 @@ import re
 ticket_re = re.compile(r'(?<!build)(?:^|\s)#(\d+)')
 ticket_url = "https://code.djangoproject.com/ticket/%s"
 
-changeset_re = re.compile(r'(?:^|\s)r(\d+)')
+changeset_re = re.compile(r'\br(\d+)\b')
 changeset_re2 = re.compile(r'(?:^|\s)\[(\d+)\]')
 changeset_url = "https://code.djangoproject.com/changeset/%s"
 
