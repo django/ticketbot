@@ -17,7 +17,7 @@ svn_changeset_re = re.compile(r'\br(\d+)\b')
 svn_changeset_re2 = re.compile(r'(?:^|\s)\[(\d+)\]')
 svn_changeset_url = "https://code.djangoproject.com/changeset/%s"
 
-github_sha_re = re.compile(r'\b[A-Fa-f0-9]{5,40}\b')
+github_sha_re = re.compile(r'\b[A-Fa-f0-9]{7,40}\b')
 github_changeset_url = "https://github.com/django/django/commit/%s"
 
 
@@ -57,7 +57,7 @@ class TicketBot(irc.IRCClient):
 
         has_entities = tickets and svn_changesets and github_changesets
         if msg.startswith(self.nickname) and not has_entities:
-            self.msg(user, "Hi, I'm Django's ticketbot. I know how to linkify tickets like \"#12345\", github changesets like \"a00cf3\" and subversion changesets like \"r12345\" or \"[12345]\".")
+            self.msg(user, "Hi, I'm Django's ticketbot. I know how to linkify tickets like \"#12345\", github changesets like \"a00cf3d\" (minimum 7 characters), and subversion changesets like \"r12345\" or \"[12345]\".")
             return
 
         blacklist = range(0, 11)
