@@ -1,1 +1,1 @@
-web: python ticketbot.py
+worker: python ticketbot.py
