@@ -13,9 +13,12 @@ import re
 ticket_re = re.compile(r'(?<!build)(?:^|\s)#(\d+)')
 ticket_url = "https://code.djangoproject.com/ticket/%s"
 
-changeset_re = re.compile(r'\br(\d+)\b')
-changeset_re2 = re.compile(r'(?:^|\s)\[(\d+)\]')
-changeset_url = "https://code.djangoproject.com/changeset/%s"
+svn_changeset_re = re.compile(r'\br(\d+)\b')
+svn_changeset_re2 = re.compile(r'(?:^|\s)\[(\d+)\]')
+svn_changeset_url = "https://code.djangoproject.com/changeset/%s"
+
+github_sha_re = re.compile(r'(?<=\s)[A-Fa-f0-9]+(?=\s)')
+github_changeset_url = "https://github.com/django/django/commit/%s"
 
 
 class TicketBot(irc.IRCClient):
@@ -42,8 +45,9 @@ class TicketBot(irc.IRCClient):
         """This will get called when the bot receives a message."""
         user = user.split('!', 1)[0]
         tickets = ticket_re.findall(msg)
-        changesets = changeset_re.findall(msg)
-        changesets.extend(changeset_re2.findall(msg))
+        svn_changesets = svn_changeset_re.findall(msg)
+        svn_changesets.extend(svn_changeset_re2.findall(msg))
+        github_changesets = github_sha_re.findall(msg)
 
         # Check to see if they're sending me a private message
         if channel == self.nickname:
@@ -51,7 +55,8 @@ class TicketBot(irc.IRCClient):
         else:
             target = channel
 
-        if msg.startswith(self.nickname) and not tickets and not changesets:
+        has_entities = tickets and svn_changesets and github_changesets
+        if msg.startswith(self.nickname) and not has_entities:
             self.msg(user, "Hi, I'm Django's ticketbot. I know how to linkify tickets like \"#12345\", and changesets like \"r12345\" or \"[12345]\".")
             return
 
@@ -60,8 +65,10 @@ class TicketBot(irc.IRCClient):
             if int(ticket) in blacklist:
                 continue
             self.msg(target, ticket_url % ticket)
-        for changeset in set(changesets):
-            self.msg(target, changeset_url % changeset)
+        for changeset in set(svn_changesets):
+            self.msg(target, svn_changeset_url % changeset)
+        for changeset in set(github_changesets):
+            self.msg(target, github_changeset_url % changeset)
         return
 
 
