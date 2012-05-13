@@ -17,7 +17,7 @@ svn_changeset_re = re.compile(r'\br(\d+)\b')
 svn_changeset_re2 = re.compile(r'(?:^|\s)\[(\d+)\]')
 svn_changeset_url = "https://code.djangoproject.com/changeset/%s"
 
-github_sha_re = re.compile(r'\b[A-Fa-f0-9]{7,40}\b')
+github_sha_re = re.compile(r'(?:\s|^)([A-Fa-f0-9]{7,40})(?=\s|$)')
 github_changeset_url = "https://github.com/django/django/commit/%s"
 
 
