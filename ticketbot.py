@@ -66,16 +66,19 @@ class TicketBot(irc.IRCClient):
             return
 
         # Produce links
+        links = []
         for ticket in tickets:
-            self.msg(target, ticket_url % ticket)
+            links.append(ticket_url % ticket)
         for changeset in svn_changesets:
-            self.msg(target, svn_changeset_url % changeset)
+            links.append(svn_changeset_url % changeset)
 
         # validate github changeset SHA's
         for c in github_changesets:
             r = requests.head(github_changeset_url % c)
             if r.status_code == 200:
-                self.msg(target, github_changeset_url % c)
+                links.append(github_changeset_url % c)
+
+        self.msg(target, ' '.join(links))
 
 
 class TicketBotFactory(protocol.ClientFactory):
