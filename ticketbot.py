@@ -6,6 +6,8 @@ from twisted.words.protocols import irc
 from twisted.internet import reactor, protocol
 from twisted.python import log
 
+import requests
+
 import os
 import sys
 import re
@@ -44,10 +46,11 @@ class TicketBot(irc.IRCClient):
     def privmsg(self, user, channel, msg):
         """This will get called when the bot receives a message."""
         user = user.split('!', 1)[0]
-        tickets = ticket_re.findall(msg)
-        svn_changesets = svn_changeset_re.findall(msg)
-        svn_changesets.extend(svn_changeset_re2.findall(msg))
-        github_changesets = github_sha_re.findall(msg)
+        tickets = set(ticket_re.findall(msg)).difference(
+                  set(range(0, 11)))  # #1-10 are ignored.
+        svn_changesets = set(svn_changeset_re.findall(msg)).union(
+                         set(svn_changeset_re2.findall(msg)))
+        github_changesets = set(github_sha_re.findall(msg))
 
         # Check to see if they're sending me a private message
         if channel == self.nickname:
@@ -55,21 +58,23 @@ class TicketBot(irc.IRCClient):
         else:
             target = channel
 
+        # No content? Send helptext.
         has_entities = tickets and svn_changesets and github_changesets
         if msg.startswith(self.nickname) and not has_entities:
             self.msg(user, "Hi, I'm Django's ticketbot. I know how to linkify tickets like \"#12345\", github changesets like \"a00cf3d\" (minimum 7 characters), and subversion changesets like \"r12345\" or \"[12345]\".")
             return
 
-        blacklist = range(0, 11)
-        for ticket in set(tickets):
-            if int(ticket) in blacklist:
-                continue
+        # Produce links
+        for ticket in tickets:
             self.msg(target, ticket_url % ticket)
-        for changeset in set(svn_changesets):
+        for changeset in svn_changesets:
             self.msg(target, svn_changeset_url % changeset)
-        for changeset in set(github_changesets):
-            self.msg(target, github_changeset_url % changeset)
-        return
+
+        # validate github changeset SHA's
+        for c in github_changesets:
+            r = requests.head(github_changeset_url % c)
+            if r.status_code == 200:
+                self.msg(target, github_changeset_url % c)
 
 
 class TicketBotFactory(protocol.ClientFactory):
