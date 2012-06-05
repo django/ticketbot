@@ -16,7 +16,7 @@ ticket_re = re.compile(r'(?<!build)(?:^|\s)#(\d+)')
 ticket_url = "https://code.djangoproject.com/ticket/%s"
 
 svn_changeset_re = re.compile(r'\br(\d+)\b')
-svn_changeset_re2 = re.compile(r'(?:^|\s)\[(\d+)\]')
+svn_changeset_re2 = re.compile(r'(?:^|\s)\[(\d+)\](?!\w)')
 svn_changeset_url = "https://code.djangoproject.com/changeset/%s"
 
 github_sha_re = re.compile(r'(?:\s|^)([A-Fa-f0-9]{7,40})(?=\s|$)')
