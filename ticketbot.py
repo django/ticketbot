@@ -46,7 +46,7 @@ class TicketBot(irc.IRCClient):
     def privmsg(self, user, channel, msg):
         """This will get called when the bot receives a message."""
         user = user.split('!', 1)[0]
-        tickets = set(ticket_re.findall(msg)).difference(
+        tickets = set(map(int, ticket_re.findall(msg))).difference(
                   set(range(0, 11)))  # #1-10 are ignored.
         svn_changesets = set(svn_changeset_re.findall(msg)).union(
                          set(svn_changeset_re2.findall(msg)))
