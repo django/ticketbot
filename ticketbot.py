@@ -22,6 +22,9 @@ svn_changeset_url = "https://code.djangoproject.com/changeset/%s"
 github_sha_re = re.compile(r'(?:\s|^)([A-Fa-f0-9]{7,40})(?=\s|$)')
 github_changeset_url = "https://github.com/django/django/commit/%s"
 
+dev_doc_re = re.compile(r'https?://docs\.djangoproject\.com/en/dev/(\S+)')
+stable_doc_url = 'https://docs.djangoproject.com/en/stable/%s'
+
 
 class TicketBot(irc.IRCClient):
     """A bot for URLifying Django tickets."""
@@ -51,6 +54,7 @@ class TicketBot(irc.IRCClient):
         svn_changesets = set(svn_changeset_re.findall(msg)).union(
                          set(svn_changeset_re2.findall(msg)))
         github_changesets = set(github_sha_re.findall(msg))
+        dev_doc_links = set(dev_doc_re.findall(msg))
 
         # Check to see if they're sending me a private message
         if channel == self.nickname:
@@ -59,7 +63,10 @@ class TicketBot(irc.IRCClient):
             target = channel
 
         # No content? Send helptext.
-        has_entities = tickets and svn_changesets and github_changesets
+        has_entities = (tickets and
+                        svn_changesets and
+                        github_changesets and
+                        dev_doc_links)
         if msg.startswith(self.nickname) and not has_entities:
             self.msg(user, "Hi, I'm Django's ticketbot. I know how to linkify tickets like \"#12345\", github changesets like \"a00cf3d\" (minimum 7 characters), and subversion changesets like \"r12345\" or \"[12345]\".")
             self.msg(user, "Suggestions? Problems? Help make me better: https://github.com/idangazit/django-ticketbot/")
@@ -71,6 +78,8 @@ class TicketBot(irc.IRCClient):
             links.append(ticket_url % ticket)
         for changeset in svn_changesets:
             links.append(svn_changeset_url % changeset)
+        for dev_link in dev_doc_links:
+            links.append(stable_doc_url % dev_link)
 
         # validate github changeset SHA's
         for c in github_changesets:
