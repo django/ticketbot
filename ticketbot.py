@@ -69,7 +69,7 @@ class TicketBot(irc.IRCClient):
                         dev_doc_links)
         if msg.startswith(self.nickname) and not has_entities:
             self.msg(user, "Hi, I'm Django's ticketbot. I know how to linkify tickets like \"#12345\", github changesets like \"a00cf3d\" (minimum 7 characters), and subversion changesets like \"r12345\" or \"[12345]\".")
-            self.msg(user, "Suggestions? Problems? Help make me better: https://github.com/idangazit/django-ticketbot/")
+            self.msg(user, "Suggestions? Problems? Help make me better: https://github.com/idan/django-ticketbot/")
             return
 
         # Produce links
