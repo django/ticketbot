@@ -54,7 +54,10 @@ class TicketBot(irc.IRCClient):
         svn_changesets = set(svn_changeset_re.findall(msg)).union(
                          set(svn_changeset_re2.findall(msg)))
         github_changesets = set(github_sha_re.findall(msg))
-        dev_doc_links = set(dev_doc_re.findall(msg))
+        if not channel.endswith('-dev'):
+            dev_doc_links = set(dev_doc_re.findall(msg))
+        else:
+            dev_doc_links = []
 
         # Check to see if they're sending me a private message
         if channel == self.nickname:
