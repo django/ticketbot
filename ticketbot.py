@@ -23,7 +23,7 @@ github_sha_re = re.compile(r'(?:\s|^)([A-Fa-f0-9]{7,40})(?=\s|$)')
 github_changeset_url = "https://github.com/django/django/commit/%s"
 
 dev_doc_re = re.compile(r'https?://docs\.djangoproject\.com/en/dev/(\S+)')
-stable_doc_url = 'https://docs.djangoproject.com/en/stable/%s'
+stable_doc_url = 'Stable documentation link: https://docs.djangoproject.com/en/stable/%s'
 
 
 class TicketBot(irc.IRCClient):
@@ -32,6 +32,7 @@ class TicketBot(irc.IRCClient):
     nickname = "ticketbot"
     password = os.environ['NICKSERV_PASS']
     channels = os.environ['CHANNELS'].split(',')
+    doc_rewrite_channels = os.environ['DOC_REWRITE_CHANNELS'].split(',')
 
     def connectionMade(self):
         irc.IRCClient.connectionMade(self)
@@ -54,7 +55,7 @@ class TicketBot(irc.IRCClient):
         svn_changesets = set(svn_changeset_re.findall(msg)).union(
                          set(svn_changeset_re2.findall(msg)))
         github_changesets = set(github_sha_re.findall(msg))
-        if not channel.endswith('-dev'):
+        if channel in doc_rewrite_channels:
             dev_doc_links = set(dev_doc_re.findall(msg))
         else:
             dev_doc_links = []
