@@ -32,7 +32,7 @@ class TicketBot(irc.IRCClient):
     nickname = "ticketbot"
     password = os.environ['NICKSERV_PASS']
     channels = os.environ['CHANNELS'].split(',')
-    doc_rewrite_channels = os.environ['DOC_REWRITE_CHANNELS'].split(',')
+    doc_rewrite_channels = os.environ.get('DOC_REWRITE_CHANNELS', '').split(',')
 
     def connectionMade(self):
         irc.IRCClient.connectionMade(self)
