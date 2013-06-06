@@ -55,7 +55,7 @@ class TicketBot(irc.IRCClient):
         svn_changesets = set(svn_changeset_re.findall(msg)).union(
                          set(svn_changeset_re2.findall(msg)))
         github_changesets = set(github_sha_re.findall(msg))
-        if channel in doc_rewrite_channels:
+        if channel in self.doc_rewrite_channels:
             dev_doc_links = set(dev_doc_re.findall(msg))
         else:
             dev_doc_links = []
