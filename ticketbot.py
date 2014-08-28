@@ -21,6 +21,8 @@ svn_changeset_url = "https://code.djangoproject.com/changeset/%s"
 
 github_sha_re = re.compile(r'(?:\s|^)([A-Fa-f0-9]{7,40})(?=\s|$)')
 github_changeset_url = "https://github.com/django/django/commit/%s"
+github_PR_re = re.compile(r'(?:\bPR|\B!)(\d+)\b')
+github_PR_url = "https://github.com/django/django/pull/%s"
 
 dev_doc_re = re.compile(r'https?://docs\.djangoproject\.com/en/dev/(\S+)')
 stable_doc_url = 'Stable documentation link: https://docs.djangoproject.com/en/stable/%s'
@@ -55,6 +57,7 @@ class TicketBot(irc.IRCClient):
         svn_changesets = set(svn_changeset_re.findall(msg)).union(
                          set(svn_changeset_re2.findall(msg)))
         github_changesets = set(github_sha_re.findall(msg))
+        github_PRs = set(github_PR_re.findall(msg))
         if channel in self.doc_rewrite_channels:
             dev_doc_links = set(dev_doc_re.findall(msg))
         else:
@@ -72,8 +75,19 @@ class TicketBot(irc.IRCClient):
                         github_changesets and
                         dev_doc_links)
         if msg.startswith(self.nickname) and not has_entities:
-            self.msg(user, "Hi, I'm Django's ticketbot. I know how to linkify tickets like \"#12345\", github changesets like \"a00cf3d\" (minimum 7 characters), and subversion changesets like \"r12345\" or \"[12345]\".")
-            self.msg(user, "Suggestions? Problems? Help make me better: https://github.com/idan/django-ticketbot/")
+            self.msg(
+                user,
+                "Hi, I'm Django's ticketbot. I know how to linkify tickets "
+                "like \"#12345\", github changesets like \"a00cf3d\" (minimum "
+                "7 characters), subversion changesets like \"r12345\" or "
+                "\"[12345]\", and github pull requests like \"PR12345\" or "
+                "\"!12345\"."
+            )
+            self.msg(
+                user,
+                "Suggestions? Problems? Help make me better: "
+                "https://github.com/idan/django-ticketbot/"
+            )
             return
 
         # Produce links
@@ -84,6 +98,8 @@ class TicketBot(irc.IRCClient):
             links.append(svn_changeset_url % changeset)
         for dev_link in dev_doc_links:
             links.append(stable_doc_url % dev_link)
+        for PR in github_PRs:
+            links.append(github_PR_url % PR)
 
         # validate github changeset SHA's
         for c in github_changesets:
