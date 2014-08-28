@@ -86,7 +86,7 @@ class TicketBot(irc.IRCClient):
             self.msg(
                 user,
                 "Suggestions? Problems? Help make me better: "
-                "https://github.com/idan/django-ticketbot/"
+                "https://github.com/django/django-ticketbot/"
             )
             return
 
