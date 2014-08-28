@@ -62,8 +62,8 @@ class TicketBot(irc.IRCClient):
             target = channel
 
         # No content? Send helptext.
-        has_entities = (tickets and
-                        svn_changesets and
+        has_entities = (tickets or
+                        svn_changesets or
                         github_changesets)
         if msg.startswith(self.nickname) and not has_entities:
             self.msg(
