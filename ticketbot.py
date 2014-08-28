@@ -24,9 +24,6 @@ github_changeset_url = "https://github.com/django/django/commit/%s"
 github_PR_re = re.compile(r'(?:\bPR|\B!)(\d+)\b')
 github_PR_url = "https://github.com/django/django/pull/%s"
 
-dev_doc_re = re.compile(r'https?://docs\.djangoproject\.com/en/dev/(\S+)')
-stable_doc_url = 'Stable documentation link: https://docs.djangoproject.com/en/stable/%s'
-
 
 class TicketBot(irc.IRCClient):
     """A bot for URLifying Django tickets."""
@@ -34,7 +31,6 @@ class TicketBot(irc.IRCClient):
     nickname = "ticketbot"
     password = os.environ['NICKSERV_PASS']
     channels = os.environ['CHANNELS'].split(',')
-    doc_rewrite_channels = os.environ.get('DOC_REWRITE_CHANNELS', '').split(',')
 
     def connectionMade(self):
         irc.IRCClient.connectionMade(self)
@@ -58,10 +54,6 @@ class TicketBot(irc.IRCClient):
                          set(svn_changeset_re2.findall(msg)))
         github_changesets = set(github_sha_re.findall(msg))
         github_PRs = set(github_PR_re.findall(msg))
-        if channel in self.doc_rewrite_channels:
-            dev_doc_links = set(dev_doc_re.findall(msg))
-        else:
-            dev_doc_links = []
 
         # Check to see if they're sending me a private message
         if channel == self.nickname:
@@ -72,8 +64,7 @@ class TicketBot(irc.IRCClient):
         # No content? Send helptext.
         has_entities = (tickets and
                         svn_changesets and
-                        github_changesets and
-                        dev_doc_links)
+                        github_changesets)
         if msg.startswith(self.nickname) and not has_entities:
             self.msg(
                 user,
@@ -96,8 +87,6 @@ class TicketBot(irc.IRCClient):
             links.append(ticket_url % ticket)
         for changeset in svn_changesets:
             links.append(svn_changeset_url % changeset)
-        for dev_link in dev_doc_links:
-            links.append(stable_doc_url % dev_link)
         for PR in github_PRs:
             links.append(github_PR_url % PR)
 
