@@ -8,9 +8,10 @@ from twisted.python import log
 
 import requests
 
+from collections import namedtuple
 import os
-import sys
 import re
+import sys
 
 ticket_re = re.compile(r'(?<!build)(?:^|\s)#(\d+)')
 ticket_url = "https://code.djangoproject.com/ticket/%s"
@@ -24,8 +25,58 @@ github_changeset_url = "https://github.com/django/django/commit/%s"
 github_PR_re = re.compile(r'(?:\bPR|\B!)(\d+)\b')
 github_PR_url = "https://github.com/django/django/pull/%s"
 
-dev_doc_re = re.compile(r'https?://docs\.djangoproject\.com/en/dev/(\S+)')
-stable_doc_url = 'Stable documentation link: https://docs.djangoproject.com/en/stable/%s'
+
+MatchSet = namedtuple('MatchSet',
+    ['tickets', 'svn_changesets', 'github_changesets', 'github_PRs'])
+
+
+def get_matches(message):
+    """
+    Given a message, return a tuple of various interesting things in it:
+        * ticket ids
+        * SVN changeset ids
+        * git commit ids
+        * github PR ids
+    """
+    tickets = set(map(int, ticket_re.findall(message))).difference(
+              set(range(0, 11)))  # #1-10 are ignored.
+    svn_changesets = set(svn_changeset_re.findall(message)).union(
+                     set(svn_changeset_re2.findall(message)))
+    github_changesets = set(github_sha_re.findall(message))
+    github_PRs = set(github_PR_re.findall(message))
+
+    return MatchSet(tickets, svn_changesets, github_changesets, github_PRs)
+
+
+def validate_sha_github(sha):
+    """
+    Make sure the given SHA belong to the Django tree.
+    Works by making a request to the github repo.
+    """
+    r = requests.head(github_changeset_url % c)
+    return r.status_code == 200
+
+
+def get_links(match_set, sha_validation=validate_sha_github):
+    """
+    Given a match_set (a tuple of matches returned by get_matches),
+    return a list of links to show back to the user.
+
+    The sha_validation argument is a callable that's used to validate
+    the commit ids. Passing None skips the validation.
+    """
+    links = []
+    for ticket in match_set.tickets:
+        links.append(ticket_url % ticket)
+    for changeset in match_set.svn_changesets:
+        links.append(svn_changeset_url % changeset)
+    for PR in match_set.github_PRs:
+        links.append(github_PR_url % PR)
+
+    # validate github changeset SHA's
+    for c in match_set.github_changesets:
+        if sha_validation and sha_validation(c):
+            links.append(github_changeset_url % c)
 
 
 class TicketBot(irc.IRCClient):
@@ -34,7 +85,6 @@ class TicketBot(irc.IRCClient):
     nickname = "ticketbot"
     password = os.environ['NICKSERV_PASS']
     channels = os.environ['CHANNELS'].split(',')
-    doc_rewrite_channels = os.environ.get('DOC_REWRITE_CHANNELS', '').split(',')
 
     def connectionMade(self):
         irc.IRCClient.connectionMade(self)
@@ -52,29 +102,10 @@ class TicketBot(irc.IRCClient):
     def privmsg(self, user, channel, msg):
         """This will get called when the bot receives a message."""
         user = user.split('!', 1)[0]
-        tickets = set(map(int, ticket_re.findall(msg))).difference(
-                  set(range(0, 11)))  # #1-10 are ignored.
-        svn_changesets = set(svn_changeset_re.findall(msg)).union(
-                         set(svn_changeset_re2.findall(msg)))
-        github_changesets = set(github_sha_re.findall(msg))
-        github_PRs = set(github_PR_re.findall(msg))
-        if channel in self.doc_rewrite_channels:
-            dev_doc_links = set(dev_doc_re.findall(msg))
-        else:
-            dev_doc_links = []
-
-        # Check to see if they're sending me a private message
-        if channel == self.nickname:
-            target = user
-        else:
-            target = channel
+        matches = get_matches(msg)
 
         # No content? Send helptext.
-        has_entities = (tickets and
-                        svn_changesets and
-                        github_changesets and
-                        dev_doc_links)
-        if msg.startswith(self.nickname) and not has_entities:
+        if msg.startswith(self.nickname) and not any(matches):
             self.msg(
                 user,
                 "Hi, I'm Django's ticketbot. I know how to linkify tickets "
@@ -86,27 +117,18 @@ class TicketBot(irc.IRCClient):
             self.msg(
                 user,
                 "Suggestions? Problems? Help make me better: "
-                "https://github.com/idan/django-ticketbot/"
+                "https://github.com/django/django-ticketbot/"
             )
             return
 
         # Produce links
-        links = []
-        for ticket in tickets:
-            links.append(ticket_url % ticket)
-        for changeset in svn_changesets:
-            links.append(svn_changeset_url % changeset)
-        for dev_link in dev_doc_links:
-            links.append(stable_doc_url % dev_link)
-        for PR in github_PRs:
-            links.append(github_PR_url % PR)
+        links = get_links(matches)
 
-        # validate github changeset SHA's
-        for c in github_changesets:
-            r = requests.head(github_changeset_url % c)
-            if r.status_code == 200:
-                links.append(github_changeset_url % c)
-
+        # Check to see if they're sending me a private message
+        if channel == self.nickname:
+            target = user
+        else:
+            target = channel
         self.msg(target, ' '.join(links))
 
 
