@@ -53,7 +53,7 @@ def validate_sha_github(sha):
     Make sure the given SHA belong to the Django tree.
     Works by making a request to the github repo.
     """
-    r = requests.head(github_changeset_url % c)
+    r = requests.head(github_changeset_url % sha)
     return r.status_code == 200
 
 
@@ -77,6 +77,8 @@ def get_links(match_set, sha_validation=validate_sha_github):
     for c in match_set.github_changesets:
         if sha_validation and sha_validation(c):
             links.append(github_changeset_url % c)
+
+    return links
 
 
 class TicketBot(irc.IRCClient):

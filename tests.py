@@ -80,3 +80,13 @@ class MatchingTests(unittest.TestCase):
             set(['12345678']),
             set(['1234', '5678']),
         ))
+
+    def test_get_links(self):
+        m = ticketbot.MatchSet([1], [2], [3], [4])
+        links = ticketbot.get_links(m, sha_validation=lambda x: True)
+        self.assertEqual(len(links), 4)
+
+    def test_get_links_empty(self):
+        m = ticketbot.MatchSet([], [], [], [])
+        links = ticketbot.get_links(m, sha_validation=lambda x: True)
+        self.assertEqual(links, [])
