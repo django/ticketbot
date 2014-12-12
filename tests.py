@@ -25,13 +25,6 @@ class MatchingTests(unittest.TestCase):
             ('r1234', ['1234']),
             ('You can have several: r1234 r5678', ['1234', '5678']),
             ('Not inside a wordr1234', []),
-
-            ('Asdf [1234] asdf', ['1234']),
-            ('[1234] works at the beginning', ['1234']),
-            ('Works at the end [1234]', ['1234']),
-            ('[1234]', ['1234']),
-            ('You can have several: [1234] [5678]', ['1234', '5678']),
-            ('Not inside a word[1234]', []),
         ]:
             matches = ticketbot.get_matches(msg)
             self.assertEqual(matches.svn_changesets, set(expected))
@@ -72,11 +65,11 @@ class MatchingTests(unittest.TestCase):
             self.assertEqual(matches.github_PRs, set(expected))
 
     def test_combining(self):
-        msg = '#1234 r1234 [5678] 12345678 PR1234 !5678'
+        msg = '#1234 r1234 12345678 PR1234 !5678'
         matches = ticketbot.get_matches(msg)
         self.assertEqual(matches, (
             set([1234]),
-            set(['1234', '5678']),
+            set(['1234']),
             set(['12345678']),
             set(['1234', '5678']),
         ))

@@ -17,7 +17,6 @@ ticket_re = re.compile(r'(?<!build)(?:^|\s)#(\d+)')
 ticket_url = "https://code.djangoproject.com/ticket/%s"
 
 svn_changeset_re = re.compile(r'\br(\d+)\b')
-svn_changeset_re2 = re.compile(r'(?:^|\s)\[(\d+)\](?!\w)')
 svn_changeset_url = "https://code.djangoproject.com/changeset/%s"
 
 github_sha_re = re.compile(r'(?:\s|^)([A-Fa-f0-9]{7,40})(?=\s|$)')
@@ -40,8 +39,7 @@ def get_matches(message):
     """
     tickets = set(map(int, ticket_re.findall(message))).difference(
               set(range(0, 11)))  # #1-10 are ignored.
-    svn_changesets = set(svn_changeset_re.findall(message)).union(
-                     set(svn_changeset_re2.findall(message)))
+    svn_changesets = set(svn_changeset_re.findall(message))
     github_changesets = set(github_sha_re.findall(message))
     github_PRs = set(github_PR_re.findall(message))
 
@@ -112,9 +110,8 @@ class TicketBot(irc.IRCClient):
                 user,
                 "Hi, I'm Django's ticketbot. I know how to linkify tickets "
                 "like \"#12345\", github changesets like \"a00cf3d\" (minimum "
-                "7 characters), subversion changesets like \"r12345\" or "
-                "\"[12345]\", and github pull requests like \"PR12345\" or "
-                "\"!12345\"."
+                "7 characters), subversion changesets like \"r12345\", and "
+                "github pull requests like \"PR12345\" or \"!12345\"."
             )
             self.msg(
                 user,
