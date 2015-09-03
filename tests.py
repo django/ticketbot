@@ -17,18 +17,6 @@ class MatchingTests(unittest.TestCase):
             matches = ticketbot.get_matches(msg)
             self.assertEqual(matches.tickets, set(expected))
 
-    def test_SVN_changeset(self):
-        for msg, expected in [
-            ('Asdf r1234 asdf', ['1234']),
-            ('r1234 works at the beginning', ['1234']),
-            ('Works at the end r1234', ['1234']),
-            ('r1234', ['1234']),
-            ('You can have several: r1234 r5678', ['1234', '5678']),
-            ('Not inside a wordr1234', []),
-        ]:
-            matches = ticketbot.get_matches(msg)
-            self.assertEqual(matches.svn_changesets, set(expected))
-
     def test_commit_id(self):
         for msg, expected in [
             ('Asdf d6ded0e91b asdf', ['d6ded0e91b']),
@@ -69,17 +57,16 @@ class MatchingTests(unittest.TestCase):
         matches = ticketbot.get_matches(msg)
         self.assertEqual(matches, (
             set([1234]),
-            set(['1234']),
             set(['12345678']),
             set(['1234', '5678']),
         ))
 
     def test_get_links(self):
-        m = ticketbot.MatchSet([1], [2], [3], [4])
+        m = ticketbot.MatchSet([1], [2], [3])
         links = ticketbot.get_links(m, sha_validation=lambda x: True)
-        self.assertEqual(len(links), 4)
+        self.assertEqual(len(links), 3)
 
     def test_get_links_empty(self):
-        m = ticketbot.MatchSet([], [], [], [])
+        m = ticketbot.MatchSet([], [], [])
         links = ticketbot.get_links(m, sha_validation=lambda x: True)
         self.assertEqual(links, [])

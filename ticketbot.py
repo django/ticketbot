@@ -16,9 +16,6 @@ import sys
 ticket_re = re.compile(r'(?<!build)(?:^|\s)#(\d+)')
 ticket_url = "https://code.djangoproject.com/ticket/%s"
 
-svn_changeset_re = re.compile(r'\br(\d+)\b')
-svn_changeset_url = "https://code.djangoproject.com/changeset/%s"
-
 github_sha_re = re.compile(r'(?:\s|^)([A-Fa-f0-9]{7,40})(?=\s|$)')
 github_changeset_url = "https://github.com/django/django/commit/%s"
 github_PR_re = re.compile(r'(?:\bPR|\B!)(\d+)\b')
@@ -26,24 +23,23 @@ github_PR_url = "https://github.com/django/django/pull/%s"
 
 
 MatchSet = namedtuple('MatchSet',
-    ['tickets', 'svn_changesets', 'github_changesets', 'github_PRs'])
+    ['tickets', 'github_changesets', 'github_PRs'])
 
 
 def get_matches(message):
     """
     Given a message, return a tuple of various interesting things in it:
         * ticket ids
-        * SVN changeset ids
         * git commit ids
         * github PR ids
     """
     tickets = set(map(int, ticket_re.findall(message))).difference(
-              set(range(0, 11)))  # #1-10 are ignored.
-    svn_changesets = set(svn_changeset_re.findall(message))
+        set(range(0, 11))
+    )  # #1-10 are ignored.
     github_changesets = set(github_sha_re.findall(message))
     github_PRs = set(github_PR_re.findall(message))
 
-    return MatchSet(tickets, svn_changesets, github_changesets, github_PRs)
+    return MatchSet(tickets, github_changesets, github_PRs)
 
 
 def validate_sha_github(sha):
@@ -66,8 +62,6 @@ def get_links(match_set, sha_validation=validate_sha_github):
     links = []
     for ticket in match_set.tickets:
         links.append(ticket_url % ticket)
-    for changeset in match_set.svn_changesets:
-        links.append(svn_changeset_url % changeset)
     for PR in match_set.github_PRs:
         links.append(github_PR_url % PR)
 
