@@ -139,7 +139,7 @@ class TicketBotFactory(protocol.ClientFactory):
         connector.connect()
 
     def clientConnectionFailed(self, connector, reason):
-        print "connection failed:", reason
+        print("connection failed:", reason)
         reactor.stop()
 
 
