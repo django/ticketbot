@@ -1,2 +1,2 @@
-Twisted==16.3
-requests==2.10.0
+Twisted==17.9
+requests==2.18.4
