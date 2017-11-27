@@ -21,7 +21,7 @@ github_PR_url = "https://github.com/django/django/pull/%s"
 
 
 MatchSet = namedtuple('MatchSet',
-                      ['tickets', 'github_changesets', 'github_PRs'])
+    ['tickets', 'github_changesets', 'github_PRs'])
 
 
 def get_matches(message):
@@ -79,8 +79,8 @@ class Plugin:
 
     @irc3.event(irc3.rfc.PRIVMSG)
     def process_msg_or_privmsg(self, mask, event, target, data, **kw):
-        """Detect special markers, reply with their respective links."""
-        # We shouldn't send automatic replies to notices
+        """Detect special markers and reply with their respective links."""
+        # Don't send automatic replies to notices
         if event == 'NOTICE':
             return
         is_privmsg = target == self.bot.nick
@@ -98,7 +98,7 @@ class Plugin:
             self.bot.privmsg(
                 user,
                 "Suggestions? Problems? Help make me better: "
-                "https://github.com/django/ticketbot/"
+                "https://github.com/django/ticketbot"
             )
             return
 
@@ -116,8 +116,7 @@ class Plugin:
 def main():
     password = os.environ['NICKSERV_PASS']
     channels = os.environ['CHANNELS'].split(',')
-    # instantiate a bot
-    config = dict(
+    bot = irc3.IrcBot.from_config(dict(
         nick=NICK,
         username=NICK,
         realname='Django project development helper bot',
@@ -130,12 +129,11 @@ def main():
             'irc3.plugins.core',
             'irc3.plugins.sasl',
             __name__,  # this register our Plugin
-            ],
+        ],
         # debug=True,
         # verbose=True,
         # raw=True,
-    )
-    bot = irc3.IrcBot.from_config(config)
+    ))
     bot.run(forever=True)
 
 
