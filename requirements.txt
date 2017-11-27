@@ -1,2 +1,2 @@
-Twisted==17.9
+irc3==1.0.2
 requests==2.18.4

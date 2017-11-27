@@ -2,16 +2,14 @@
 The #django-dev ticket bot.
 """
 
-from twisted.words.protocols import irc
-from twisted.internet import reactor, protocol
-from twisted.python import log
-
-import requests
-
 from collections import namedtuple
 import os
 import re
-import sys
+
+import irc3
+import requests
+
+NICK = 'ticketbot'
 
 ticket_re = re.compile(r'(?<!build)(?:^|\s)#(\d+)')
 ticket_url = "https://code.djangoproject.com/ticket/%s"
@@ -73,44 +71,34 @@ def get_links(match_set, sha_validation=validate_sha_github):
     return links
 
 
-class TicketBot(irc.IRCClient):
-    """A bot for URLifying Django tickets."""
+@irc3.plugin
+class Plugin:
 
-    nickname = "ticketbot"
-    password = os.environ['NICKSERV_PASS']
-    channels = os.environ['CHANNELS'].split(',')
+    def __init__(self, bot):
+        self.bot = bot
 
-    def connectionMade(self):
-        irc.IRCClient.connectionMade(self)
-
-    def connectionLost(self, reason):
-        irc.IRCClient.connectionLost(self, reason)
-
-    def signedOn(self):
-        """Called when bot has succesfully signed on to server."""
-        self.setNick(self.nickname)
-        self.msg('NickServ', 'identify %s' % (self.password))
-        for channel in self.channels:
-            self.join(channel)
-
-    def privmsg(self, user, channel, msg):
-        """This will get called when the bot receives a message."""
-        user = user.split('!', 1)[0]
-        matches = get_matches(msg)
+    @irc3.event(irc3.rfc.PRIVMSG)
+    def process_msg_or_privmsg(self, mask, event, target, data, **kw):
+        """Detect special markers and reply with their respective links."""
+        # Don't send automatic replies to notices
+        if event == 'NOTICE':
+            return
+        is_privmsg = target == self.bot.nick
+        user = mask.nick
+        matches = get_matches(data)
 
         # No content? Send helptext.
-        if msg.startswith(self.nickname) and not any(matches):
-            self.msg(
+        if not any(matches) and (is_privmsg or data.startswith(self.bot.nick)):
+            self.bot.privmsg(
                 user,
                 "Hi, I'm Django's ticketbot. I know how to linkify tickets "
                 "like \"#12345\", github changesets like \"a00cf3d\" (minimum "
-                "7 characters), subversion changesets like \"r12345\", and "
-                "github pull requests like \"PR12345\" or \"!12345\"."
+                "7 characters), and github pull requests like \"PR12345\" or \"!12345\"."
             )
-            self.msg(
+            self.bot.privmsg(
                 user,
                 "Suggestions? Problems? Help make me better: "
-                "https://github.com/django/django-ticketbot/"
+                "https://github.com/django/ticketbot"
             )
             return
 
@@ -118,40 +106,36 @@ class TicketBot(irc.IRCClient):
         links = get_links(matches)
 
         # Check to see if they're sending me a private message
-        if channel == self.nickname:
-            target = user
+        if is_privmsg:
+            to = user
         else:
-            target = channel
-        self.msg(target, ' '.join(links))
+            to = target
+        self.bot.privmsg(to, ' '.join(links))
 
 
-class TicketBotFactory(protocol.ClientFactory):
-    """A factory for TicketBots.
-
-    A new protocol instance will be created each time we connect to the server.
-    """
-
-    # the class of the protocol to build when new connection is made
-    protocol = TicketBot
-
-    def clientConnectionLost(self, connector, reason):
-        """If we get disconnected, reconnect to server."""
-        connector.connect()
-
-    def clientConnectionFailed(self, connector, reason):
-        print("connection failed:", reason)
-        reactor.stop()
+def main():
+    password = os.environ['NICKSERV_PASS']
+    channels = os.environ['CHANNELS'].split(',')
+    bot = irc3.IrcBot.from_config(dict(
+        nick=NICK,
+        username=NICK,
+        realname='Django project development helper bot',
+        sasl_username=NICK,
+        sasl_password=password,
+        url='https://github.com/django/ticketbot',
+        autojoins=channels,
+        host='chat.freenode.net', port=6667, ssl=False,
+        includes=[
+            'irc3.plugins.core',
+            'irc3.plugins.sasl',
+            __name__,  # this register our Plugin
+        ],
+        # debug=True,
+        # verbose=True,
+        # raw=True,
+    ))
+    bot.run(forever=True)
 
 
 if __name__ == '__main__':
-    # initialize logging
-    log.startLogging(sys.stdout)
-
-    # create factory protocol and application
-    f = TicketBotFactory()
-
-    # connect factory to this host and port
-    reactor.connectTCP("chat.freenode.net", 6667, f)
-
-    # run bot
-    reactor.run()
+    main()
