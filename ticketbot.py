@@ -2,14 +2,12 @@
 The #django-dev ticket bot.
 """
 
-from collections import namedtuple
 import os
 import re
+from collections import namedtuple
 
 import irc3
 import requests
-
-NICK = 'ticketbot'
 
 ticket_re = re.compile(r'(?<!build)(?:^|\s)#(\d+)')
 ticket_url = "https://code.djangoproject.com/ticket/%s"
@@ -115,20 +113,23 @@ class Plugin:
 
 def main():
     password = os.environ['NICKSERV_PASS']
+    username = os.environ['NICKSERV_USER']
+    host = os.environ['IRC_HOST']
+    port = int(os.environ['IRC_PORT'])
     channels = os.environ['CHANNELS'].split(',')
     bot = irc3.IrcBot.from_config(dict(
-        nick=NICK,
-        username=NICK,
+        nick=username,
+        username=username,
         realname='Django project development helper bot',
-        sasl_username=NICK,
+        sasl_username=username,
         sasl_password=password,
         url='https://github.com/django/ticketbot',
         autojoins=channels,
-        host='chat.freenode.net', port=6667, ssl=False,
+        host=host, port=port, ssl=True,
         includes=[
             'irc3.plugins.core',
             'irc3.plugins.sasl',
-            __name__,  # this register our Plugin
+            __name__,  # this registers our plugin
         ],
         # debug=True,
         # verbose=True,
