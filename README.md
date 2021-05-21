@@ -6,8 +6,6 @@ This is the bot which replaces the following types of mentions with their URLs:
 * `"!nnnn"` or `"PRnnnn"` -- Pull request nnnn submitted to the django/django GitHub repo
 * `"hhhhhhh"` (7 or more chars) -- Commit with ID hhhhhhh in the django/django GitHub repo
 
-It has a registered nick in Freenode: *ticketbot*.
-
 ## Local setup
 
 1. Create a virtualenv making sure you use the same Python version as the one specified to Heroku in `runtime.txt`:
